@@ -11,8 +11,6 @@ use url::Url;
 /// Payload of a message received from the websocket.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StreamEvent {
-    /// the event name from OS
-    pub event: String,
     /// Timestamp of when this message was sent to the client.
     pub sent_at: DateTime<Utc>,
     /// Contents of the message
