@@ -1,4 +1,4 @@
-use crate::Event;
+use crate::protocol::Event;
 use chrono::{DateTime, Utc};
 use ethers_core::{
     abi::Address,

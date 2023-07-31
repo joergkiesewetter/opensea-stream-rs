@@ -1,9 +1,13 @@
 use core::fmt::Display;
 use futures_util::{SinkExt, StreamExt};
+use serde::Deserialize;
 use tokio::{sync::mpsc, time::Duration};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
-use crate::protocol::{Collection, Network};
+use crate::{
+    protocol::{Collection, Network},
+    schema::StreamEvent,
+};
 
 pub struct Client {
     send_tx: mpsc::Sender<PhoenixMessage>,
@@ -64,13 +68,26 @@ impl Client {
             .unwrap();
     }
 
-    pub async fn read_event(&mut self) -> String {
+    pub async fn read_event(&mut self) -> Option<StreamEvent> {
         let message = self.read_rx.recv().await.unwrap();
 
-        let event = serde_json::from_str::<serde_json::Value>(&message).unwrap();
+        // println!("{:#?}", message);
+        let response = match serde_json::from_str::<PhoenixResponse>(&message) {
+            Ok(v) => v,
+            Err(e) => {
+                println!("{}", &message);
+                println!("error: {}", e);
+                return None;
+            }
+        };
 
-        println!("{:#?}", event);
-        message
+        let result: Option<StreamEvent> = match response.payload {
+            Some(Payload::Custom(c)) => Some(c),
+            _ => None,
+        };
+
+        // println!("{:#?}", result);
+        result
     }
 }
 
@@ -78,6 +95,28 @@ impl Client {
 enum PhoenixMessage {
     Heartbeat,
     Subscribe(Collection),
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct PhoenixResponse {
+    topic: String,
+    event: String,
+    payload: Option<Payload<StreamEvent>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+pub enum Payload<R> {
+    /// Reply/acknowledgement of a message sent from the client.
+    /// This variant should not be sent to the server.
+    PushReply {
+        /// Status of the reply.
+        status: String,
+        /// Body of the reply.
+        response: serde_json::Value,
+    },
+    /// A custom payload.
+    Custom(R),
 }
 
 impl Display for PhoenixMessage {
