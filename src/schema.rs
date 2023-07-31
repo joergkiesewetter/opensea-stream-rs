@@ -5,6 +5,7 @@ use ethers_core::{
     types::{H256, U256},
 };
 use serde::{de::Error, Deserialize, Serialize};
+use serde_with::{serde_as, TimestampSeconds};
 use std::{fmt, str::FromStr};
 use url::Url;
 
@@ -266,7 +267,6 @@ pub struct ItemListedData {
     /// Context
     #[serde(flatten)]
     pub context: Context,
-
     /// Timestamp of when the listing was created.
     pub event_timestamp: DateTime<Utc>,
     /// Starting price of the listing. See `payment_token` for the actual value of each unit.
@@ -287,11 +287,13 @@ pub struct ItemListedData {
     pub order_hash: H256,
     /// Token accepted for payment.
     pub payment_token: PaymentToken,
-    /// Number of items on sale. This is always `1` for ERC-721 tokens.
-    pub quantity: u64,
-    /// Buyer of the listing.
-    #[serde(with = "address_fromjson_opt", default)]
-    pub taker: Option<Address>,
+    /// protocol data from OS
+    pub protocol_data: ProtocolData,
+    // /// Number of items on sale. This is always `1` for ERC-721 tokens.
+    // pub quantity: u64,
+    // /// Buyer of the listing.
+    // #[serde(with = "address_fromjson_opt", default)]
+    // pub taker: Option<Address>,
 }
 
 /// Payload data for [`Payload::ItemSold`].
@@ -301,10 +303,10 @@ pub struct ItemSoldData {
     #[serde(flatten)]
     pub context: Context,
 
-    /// Timestamp of when the item was sold.
-    pub event_timestamp: DateTime<Utc>,
     /// Timestamp of when the listing was closed.
     pub closing_date: DateTime<Utc>,
+    /// Timestamp of when the item was sold.
+    pub event_timestamp: DateTime<Utc>,
     /// Whether the listing was private.
     pub is_private: bool,
     /// Type of listing. `None` indicates the listing was a buyout.
@@ -312,6 +314,8 @@ pub struct ItemSoldData {
     /// Creator of the listing.
     #[serde(with = "address_fromjson")]
     pub maker: Address,
+    /// Hash id of the listing.
+    pub order_hash: H256,
     /// Token used for payment.
     pub payment_token: PaymentToken,
     /// Number of items bought. This is always `1` for ERC-721 tokens.
@@ -512,6 +516,110 @@ impl fmt::Display for ListingType {
     }
 }
 
+/// Details of a transaction
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Transaction {
+    /// Transaction hash
+    pub hash: H256,
+    /// Timestamp of transaction
+    pub timestamp: DateTime<Utc>,
+}
+
+/// Token used for payment.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PaymentToken {
+    /// Contract address
+    pub address: Address,
+    /// Granularity of the token
+    pub decimals: u64,
+    /// Price of token (denominated in ETH)
+    #[serde(with = "f64_fromstring")]
+    pub eth_price: f64,
+    /// Name
+    pub name: String,
+    /// Symbol
+    pub symbol: String,
+    /// Price of token (denominated in USD)
+    #[serde(with = "f64_fromstring")]
+    pub usd_price: f64,
+}
+
+/// Protocol data for offers and item transfers.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProtocolData {
+    /// the protocol parameters of the event
+    pub parameters: Parameters,
+    /// the signature from the counterparty
+    pub signature: String,
+}
+
+/// the parameters of the event
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Parameters {
+    /// the conduit key for this listing
+    pub conduit_key: String,
+    /// the consideration items for the payments
+    pub consideration: Vec<Consideration>,
+    /// a counter
+    pub counter: u64,
+    ///the end time for the listing
+    #[serde_as(as = "TimestampSeconds<i64>")]
+    pub end_time: DateTime<Utc>,
+    /// the offer object itself
+    pub offer: Vec<Offer>,
+    /// the offerer
+    pub offerer: Address,
+    /// the OS order type
+    pub order_type: u64,
+    /// random salt
+    pub salt: String,
+    /// the start time of the listing
+    #[serde_as(as = "TimestampSeconds<i64>")]
+    pub start_time: DateTime<Utc>,
+    /// the amount of consideration items
+    pub total_original_consideration_items: u64,
+    /// the zone for the execution (post execution evaluation)
+    pub zone: Address,
+    /// the hash of the given zone
+    pub zone_hash: String,
+}
+
+/// a consideration item for an offer
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Consideration {
+    /// the type of the given transfer
+    pub item_type: u64,
+    /// the address of the offered item
+    pub token: Address,
+    /// the identifier or criteria of the offer
+    pub identifier_or_criteria: u64,
+    /// the min amount to transfer to the recipient
+    pub start_amount: u64,
+    /// the max amount to transfer to the recipient
+    pub end_amount: u64,
+    /// the recipient of this transfer
+    pub recipient: Address,
+}
+
+/// the offer object within the protocol data
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Offer {
+    /// the max amount of the offer
+    pub end_amount: u64,
+    /// the identifier or criteria of the offer
+    pub identifier_or_criteria: String,
+    /// the type of the offered item
+    pub item_type: u64,
+    /// the min amount of the offer
+    pub start_amount: u64,
+    /// the address of the offered item
+    pub token: Address,
+}
+
 mod address_fromjson {
     use ethers_core::abi::Address;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -559,34 +667,6 @@ mod address_fromjson_opt {
     {
         value.map(|v| Inner { address: v }).serialize(serializer)
     }
-}
-
-/// Details of a transaction
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Transaction {
-    /// Transaction hash
-    pub hash: H256,
-    /// Timestamp of transaction
-    pub timestamp: DateTime<Utc>,
-}
-
-/// Token used for payment.
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PaymentToken {
-    /// Contract address
-    pub address: Address,
-    /// Granularity of the token
-    pub decimals: u64,
-    /// Price of token (denominated in ETH)
-    #[serde(with = "f64_fromstring")]
-    pub eth_price: f64,
-    /// Name
-    pub name: String,
-    /// Symbol
-    pub symbol: String,
-    /// Price of token (denominated in USD)
-    #[serde(with = "f64_fromstring")]
-    pub usd_price: f64,
 }
 
 // h/t: meetmangukiya (https://gist.github.com/meetmangukiya/40cad17bcb7d3196d33b072a3500fac7)

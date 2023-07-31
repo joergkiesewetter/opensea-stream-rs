@@ -1,6 +1,5 @@
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use url::Url;
 
 /// A collection whose events can be subscribed to.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -24,36 +23,11 @@ impl Display for Collection {
     }
 }
 
-impl Serialize for Collection {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.to_string().serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for Collection {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s: String = Deserialize::deserialize(deserializer)?;
-        let s = s
-            .strip_prefix("collection:")
-            .ok_or_else(|| D::Error::custom("expected collection:name"))?;
-
-        Ok(match s {
-            "*" => Collection::All,
-            _ => Collection::Collection(s.to_owned()),
-        })
-    }
-}
-
 /// The websocket to connect to.
 ///
 /// OpenSea provides two websockets for either `Mainnet` (production) networks for `Testnet` networks.
 /// See [`Chain`](crate::schema::Chain) for a full list of supported chains.
+/// #[derive(Debug)]
 pub enum Network {
     /// Mainnet (`Ethereum`, `Polygon`, `Klaytn`, `Solana`)
     Mainnet,
@@ -61,15 +35,11 @@ pub enum Network {
     Testnet,
 }
 
-impl From<Network> for Url {
-    fn from(val: Network) -> Self {
-        match val {
-            Network::Mainnet => {
-                Url::parse("wss://stream.openseabeta.com/socket/websocket").unwrap()
-            }
-            Network::Testnet => {
-                Url::parse("wss://testnets-stream.openseabeta.com/socket/websocket").unwrap()
-            }
+impl Display for Network {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Network::Mainnet => write!(f, "wss://stream.openseabeta.com/socket/websocket"),
+            Network::Testnet => write!(f, "wss://testnets-stream.openseabeta.com/socket/websocket"),
         }
     }
 }
