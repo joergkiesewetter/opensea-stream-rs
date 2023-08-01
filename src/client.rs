@@ -23,7 +23,7 @@ impl Client {
         let (mut ws_write, mut ws_read) = ws_stream.split();
 
         let (send_tx, mut send_rx) = mpsc::channel::<PhoenixMessage>(4);
-        let (read_tx, read_rx) = mpsc::channel::<String>(1024);
+        let (read_tx, read_rx) = mpsc::channel::<String>(1024*8);
 
         // handler to send messages to the websocket
         tokio::spawn(async move {
