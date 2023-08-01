@@ -68,4 +68,10 @@ pub enum Event {
     ItemReceivedBid,
     /// A collection has received an offer.
     CollectionOffer,
+    /// A trait offer has been received.
+    TraitOffer,
+    /// an event that invalidates an order.
+    OrderInvalidate,
+    /// an event that revalidates an order.
+    OrderRevalidate,
 }
