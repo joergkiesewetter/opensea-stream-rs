@@ -8,7 +8,7 @@ add to your `Cargo.toml`:
 
 ```
 [dependencies]
-opensea-stream = { git = "https://github.com/joergkiesewetter/opensea-stream-rs.git", branch = "master" }
+opensea-stream = { git = "https://github.com/joergkiesewetter/opensea-stream-rs.git", tag = "0.4.0" }
 ```
 
 ## Example
