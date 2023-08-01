@@ -40,7 +40,6 @@ impl Client {
                 // println!("RECEIVED = {:?}", message);
                 let payload = match message {
                     Message::Text(payload) => payload,
-                    // Message::Binary(payload) => payload,
                     _ => panic!("unexpected message"),
                 };
                 read_tx.send(payload).await.unwrap();
@@ -75,8 +74,8 @@ impl Client {
         let response = match serde_json::from_str::<PhoenixResponse>(&message) {
             Ok(v) => v,
             Err(e) => {
-                println!("{}", &message);
-                println!("error: {}", e);
+                // println!("{}", &message);
+                // println!("error: {}", e);
                 return None;
             }
         };

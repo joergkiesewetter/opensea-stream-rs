@@ -26,7 +26,6 @@ async fn main() {
     let mut counter_order_invalidate: u64 = 0;
     let mut counter_order_revalidate: u64 = 0;
 
-    // println!("listed\tsold\ttransferred\tmetadata\tcancelled\toffer\tbid\tcollection offer\ttrait offer\torder invalidation\torder revalidation");
     println!("{:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8}",
         "listings", "sold", "transfer", "metadata", "cancel", "offer", "bid", "c_offer", "t_offer", "invalid", "revalid", "total");
 
@@ -43,7 +42,6 @@ async fn main() {
 
         match event.payload {
             schema::Payload::ItemListed(_item) => {
-                // println!("{:#?}", listing);
                 counter_item_listed += 1;
             }
             schema::Payload::ItemSold(_item) => {
@@ -113,79 +111,4 @@ async fn main() {
             second = act_second;
         }
     }
-
-    // loop {
-    //     // The message received from the channel is a raw message of the Phoenix protocol.
-    //     // It may or may not contain a payload.
-
-    //     // println!("{:?}", subscription.recv().await);
-    //     let event: schema::StreamEvent = match subscription.recv().await?.into_custom_payload() {
-    //         Some(v) => v,
-    //         None => {
-    //             eprintln!("unexpected message");
-    //             continue;
-    //         }
-    //     };
-
-    //     // println!("{:?}", event);
-    //     // Only print item listing events.
-    //     match event.payload {
-    //         schema::Payload::ItemListed(listing) => {
-    //             println!("{:#?}", listing);
-    //             counter_item_listed += 1;
-    //         }
-    //         schema::Payload::ItemSold(item) => {
-    //             counter_item_sold += 1;
-    //         }
-    //         schema::Payload::ItemTransferred(item) => {
-    //             counter_item_transfered += 1;
-    //         }
-    //         schema::Payload::ItemMetadataUpdated(item) => {
-    //             counter_item_metadata_updated += 1;
-    //         }
-    //         schema::Payload::ItemCancelled(item) => {
-    //             counter_item_cancelled += 1;
-    //         }
-    //         schema::Payload::ItemReceivedOffer(offer) => {
-    //             counter_item_received_offer += 1;
-    //         }
-    //         schema::Payload::ItemReceivedBid(offer) => {
-    //             counter_item_received_bid += 1;
-    //         }
-    //         schema::Payload::CollectionOffer(offer) => {
-    //             counter_item_collection_offer += 1;
-    //         }
-    //         // schema::Payload::TraitOffer(offer) => {
-    //         //     counter_item_trait_offer += 1;
-    //         // }
-    //         // schema::Payload::OrderInvalidation(order) => {
-    //         //     counter_order_invalidation += 1;
-    //         // }
-    //         // schema::Payload::OrderRevalidation(order) => {
-    //         //     counter_order_revalidation += 1;
-    //         // }
-    //         _ => {
-    //             println!("other event: {:?}", event.payload)
-    //         }
-    //     }
-    //     // if let schema::Payload::ItemListed(listing) = event.payload {
-    //     //     counter_item_listed += 1;
-    //     // }
-
-    //     // if let schema::Payload::ItemReceivedOffer(offer) = event.payload {
-    //     //     counter_item_offers += 1;
-    //     // }
-
-    //     println!(
-    //         "listings: ({:?}, {:.3}/s); offers: ({:?}, {:.3}/s); cancels: ({:?}, {:.3}/s); sold: ({:?}, {:.3}/s);",
-    //         counter_item_listed,
-    //         (counter_item_listed as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-    //         counter_item_received_bid,
-    //         (counter_item_received_bid as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-    //         counter_item_cancelled,
-    //         (counter_item_cancelled as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-    //         counter_item_sold,
-    //         (counter_item_sold as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-    //     );
-    // }
 }
