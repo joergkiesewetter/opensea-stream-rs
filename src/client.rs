@@ -99,7 +99,9 @@ enum PhoenixMessage {
 
 #[derive(Clone, Debug, Deserialize)]
 struct PhoenixResponse {
+    #[allow(dead_code)]
     topic: String,
+    #[allow(dead_code)]
     event: String,
     payload: Option<Payload<StreamEvent>>,
 }

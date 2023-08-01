@@ -5,7 +5,7 @@ use ethers_core::{
     types::{H256, U256},
 };
 use serde::{de::Error, Deserialize, Serialize};
-use serde_with::{serde_as, TimestampSeconds};
+use serde_with::serde_as;
 use std::{fmt, str::FromStr};
 use url::Url;
 
