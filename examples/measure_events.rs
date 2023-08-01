@@ -1,3 +1,4 @@
+use chrono::prelude::*;
 use opensea_stream::client::Client;
 use opensea_stream::protocol::{Collection, Network};
 use opensea_stream::schema;
@@ -22,9 +23,14 @@ async fn main() {
     let mut counter_item_received_bid: u64 = 0;
     let mut counter_item_collection_offer: u64 = 0;
     let mut counter_item_trait_offer: u64 = 0;
-    let mut counter_order_invalidation: u64 = 0;
-    let mut counter_order_revalidation: u64 = 0;
+    let mut counter_order_invalidate: u64 = 0;
+    let mut counter_order_revalidate: u64 = 0;
 
+    // println!("listed\tsold\ttransferred\tmetadata\tcancelled\toffer\tbid\tcollection offer\ttrait offer\torder invalidation\torder revalidation");
+    println!("{:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8}",
+        "listings", "sold", "transfer", "metadata", "cancel", "offer", "bid", "c_offer", "t_offer", "invalid", "revalid", "total");
+
+    let mut second = Utc::now().second();
     loop {
         let event = client.read_event().await;
 
@@ -34,58 +40,78 @@ async fn main() {
                 continue;
             }
         };
-        
+
         match event.payload {
-            schema::Payload::ItemListed(listing) => {
-                println!("{:#?}", listing);
+            schema::Payload::ItemListed(_item) => {
+                // println!("{:#?}", listing);
                 counter_item_listed += 1;
             }
-            schema::Payload::ItemSold(item) => {
+            schema::Payload::ItemSold(_item) => {
                 counter_item_sold += 1;
             }
-            schema::Payload::ItemTransferred(item) => {
+            schema::Payload::ItemTransferred(_item) => {
                 counter_item_transfered += 1;
             }
-            schema::Payload::ItemMetadataUpdated(item) => {
+            schema::Payload::ItemMetadataUpdated(_item) => {
                 counter_item_metadata_updated += 1;
             }
-            schema::Payload::ItemCancelled(item) => {
+            schema::Payload::ItemCancelled(_item) => {
                 counter_item_cancelled += 1;
             }
-            schema::Payload::ItemReceivedOffer(offer) => {
+            schema::Payload::ItemReceivedOffer(_item) => {
                 counter_item_received_offer += 1;
             }
-            schema::Payload::ItemReceivedBid(offer) => {
+            schema::Payload::ItemReceivedBid(_item) => {
                 counter_item_received_bid += 1;
             }
-            schema::Payload::CollectionOffer(offer) => {
+            schema::Payload::CollectionOffer(_item) => {
                 counter_item_collection_offer += 1;
             }
-            // schema::Payload::TraitOffer(offer) => {
-            //     counter_item_trait_offer += 1;
-            // }
-            // schema::Payload::OrderInvalidation(order) => {
-            //     counter_order_invalidation += 1;
-            // }
-            // schema::Payload::OrderRevalidation(order) => {
-            //     counter_order_revalidation += 1;
-            // }
+            schema::Payload::TraitOffer(_item) => {
+                counter_item_trait_offer += 1;
+            }
+            schema::Payload::OrderInvalidate(_item) => {
+                counter_order_invalidate += 1;
+            }
+            schema::Payload::OrderRevalidate(_item) => {
+                counter_order_revalidate += 1;
+            }
             _ => {
                 println!("other event: {:?}", event.payload)
             }
         }
 
-        println!(
-            "listings: ({:?}, {:.3}/s); offers: ({:?}, {:.3}/s); cancels: ({:?}, {:.3}/s); sold: ({:?}, {:.3}/s);",
-            counter_item_listed,
-            (counter_item_listed as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-            counter_item_received_bid,
-            (counter_item_received_bid as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-            counter_item_cancelled,
-            (counter_item_cancelled as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-            counter_item_sold,
-            (counter_item_sold as f64 / timer.elapsed().as_millis() as f64) * 1000.0,
-        );
+        let act_second = Utc::now().second();
+
+        if second != act_second {
+            let total = counter_item_listed
+                + counter_item_sold
+                + counter_item_transfered
+                + counter_item_metadata_updated
+                + counter_item_cancelled
+                + counter_item_received_offer
+                + counter_item_received_bid
+                + counter_item_collection_offer
+                + counter_item_trait_offer
+                + counter_order_invalidate
+                + counter_order_revalidate;
+            println!(
+                "{:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s | {:>6}/s",
+                format!("{:.2}", (counter_item_listed as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_sold as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_transfered as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_metadata_updated as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_cancelled as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_received_offer as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_received_bid as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_collection_offer as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_item_trait_offer as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_order_invalidate as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (counter_order_revalidate as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+                format!("{:.2}", (total as f64 / timer.elapsed().as_millis() as f64) * 1000.0),
+            );
+            second = act_second;
+        }
     }
 
     // loop {
