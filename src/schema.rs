@@ -863,7 +863,7 @@ mod f64_fromstring {
 
 mod timestamp_to_date {
     use chrono::{DateTime, Utc};
-    use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
     where

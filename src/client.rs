@@ -73,7 +73,7 @@ impl Client {
         // println!("{:#?}", message);
         let response = match serde_json::from_str::<PhoenixResponse>(&message) {
             Ok(v) => v,
-            Err(e) => {
+            Err(_e) => {
                 // println!("{}", &message);
                 // println!("error: {}", e);
                 return None;
